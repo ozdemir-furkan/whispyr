@@ -52,8 +52,10 @@ builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
 builder.Services.AddControllers();
 
 var app = builder.Build();
+app.UseRouting();
 app.UseCors();
 app.UseMiddleware<RateLimitMiddleware>();
+app.UseAuthorization();
 app.MapControllers();
 
 

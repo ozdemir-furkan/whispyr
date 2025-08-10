@@ -40,14 +40,38 @@ public class RoomsController(AppDbContext db) : ControllerBase
     [HttpGet("{code}/messages")]
     public async Task<IActionResult> ListMessages(string code, [FromQuery] int take = 50, [FromQuery] long? afterId = null)
     {
+        take = Math.Clamp(take, 1, 200);
+
         var room = await db.Rooms.AsNoTracking().FirstOrDefaultAsync(r => r.Code == code);
         if (room is null) return NotFound();
 
-        var q = db.Messages.AsNoTracking().Where(m => m.RoomId == room.Id);
-        if (afterId is not null) q = q.Where(m => m.Id > afterId.Value);
-        var items = await q.OrderByDescending(m => m.Id).Take(Math.Clamp(take, 1, 200)).ToListAsync();
+        var query = db.Messages.AsNoTracking().Where(m => m.RoomId == room.Id);
 
-        return Ok(items.OrderBy(m => m.Id)); // kronolojik dön
+        if (afterId is not null)
+            query = query.Where(m => m.Id > afterId);
+
+        var items = await query
+            .OrderBy(m => m.Id)
+            .Take(take)
+            .Select(m => new {
+                m.Id,
+                m.RoomId,
+                m.AuthorHash,
+                m.Text,
+                m.IsFlagged,
+                m.CreatedAt
+            })
+            .ToListAsync();
+
+        long? nextAfter = items.Count > 0 ? items[^1].Id : afterId;
+
+        return Ok(new {
+            items,
+            paging = new {
+                take,
+                nextAfter
+            }
+        });
     }
 }
 

@@ -21,10 +21,25 @@ public class RateLimitMiddleware(RequestDelegate next, IConnectionMultiplexer mu
 
             if (cnt > 60)
             {
+                var ttl = await db.KeyTimeToLiveAsync(key) ?? TimeSpan.FromMinutes(1);
+                var resetAt = DateTimeOffset.UtcNow.Add(ttl).ToUnixTimeSeconds();
+
                 ctx.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-                await ctx.Response.WriteAsJsonAsync(new { error = "rate_limited", window = "1m", limit = 60 });
-                return;
+                ctx.Response.Headers["Retry-After"] = Math.Ceiling(ttl.TotalSeconds).ToString();
+                ctx.Response.Headers["X-RateLimit-Limit"] = "60";
+                ctx.Response.Headers["X-RateLimit-Remaining"] = "0";
+                ctx.Response.Headers["X-RateLimit-Reset"] = resetAt.ToString();
+
+                await ctx.Response.WriteAsJsonAsync(new { error = "rate_limited", window = "60s", limit = 60, retryInSeconds = (int)Math.Ceiling(ttl.TotalSeconds) });
+                  return;
             }
+            else
+              {
+                // başarılı taleplerde kalan hakkı da set edelim (opsiyonel)
+               var remaining = Math.Max(0, 60 - (int)cnt);
+               ctx.Response.Headers["X-RateLimit-Limit"] = "60";
+               ctx.Response.Headers["X-RateLimit-Remaining"] = remaining.ToString();
+              }
         }
 
         await next(ctx);

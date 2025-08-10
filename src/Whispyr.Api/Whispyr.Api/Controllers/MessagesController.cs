@@ -29,6 +29,12 @@ public class MessagesController(AppDbContext db, IHubContext<RoomHub> hub, IMode
             IsFlagged = false,
             CreatedAt = DateTime.UtcNow
         };
+        var flaggedReason = "";
+        if (mod.ShouldFlag(msg.Text, out var why))
+          {
+             msg.IsFlagged = true;
+             flaggedReason = why; // <- sebebi sakla
+          }  
 
         if (mod.ShouldFlag(msg.Text, out _)) msg.IsFlagged = true;
 
@@ -42,7 +48,8 @@ public class MessagesController(AppDbContext db, IHubContext<RoomHub> hub, IMode
             text = msg.Text,
             authorHash = msg.AuthorHash,
             at = msg.CreatedAt,
-            flagged = msg.IsFlagged
+            flagged = msg.IsFlagged,
+            reason = flaggedReason  
         });
 
         return Created($"/rooms/{code}/messages/{msg.Id}", new { msg.Id, msg.IsFlagged });
