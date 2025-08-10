@@ -8,8 +8,20 @@ using Whispyr.Api.Hubs;
 using OpenTelemetry.Instrumentation.EntityFrameworkCore;
 using OpenTelemetry.Instrumentation.Runtime;
 using OpenTelemetry.Instrumentation.Process;
+using StackExchange.Redis;
+using Whispyr.Api.Middleware;
+using Whispyr.Application.Abstractions;
+using Whispyr.Infrastructure.Services;
+using Whispyr.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddHostedService<SummaryWorker>();
+
+builder.Services.AddScoped<IModerationService, SimpleModerationService>();
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+    ConnectionMultiplexer.Connect("localhost:6379"));
 
 builder.Host.UseSerilog((ctx, lc) => lc
     .ReadFrom.Configuration(ctx.Configuration)
@@ -41,6 +53,7 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 app.UseCors();
+app.UseMiddleware<RateLimitMiddleware>();
 app.MapControllers();
 
 
