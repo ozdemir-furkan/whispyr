@@ -1,9 +1,3 @@
-C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\obj\Debug\net9.0\Whispyr.Infrastructure.csproj.AssemblyReference.cache
-C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\obj\Debug\net9.0\Whispyr.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\obj\Debug\net9.0\Whispyr.Infrastructure.AssemblyInfoInputs.cache
-C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\obj\Debug\net9.0\Whispyr.Infrastructure.AssemblyInfo.cs
-C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\obj\Debug\net9.0\Whispyr.Infrastructure.csproj.CoreCompileInputs.cache
-C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\obj\Debug\net9.0\Whispyr.Infrastructure.sourcelink.json
 C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\bin\Debug\net9.0\Whispyr.Infrastructure.deps.json
 C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\bin\Debug\net9.0\Whispyr.Infrastructure.dll
 C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\bin\Debug\net9.0\Whispyr.Infrastructure.pdb
@@ -11,6 +5,12 @@ C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Wh
 C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\bin\Debug\net9.0\Whispyr.Domain.dll
 C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\bin\Debug\net9.0\Whispyr.Application.pdb
 C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\bin\Debug\net9.0\Whispyr.Domain.pdb
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\obj\Debug\net9.0\Whispyr.Infrastructure.csproj.AssemblyReference.cache
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\obj\Debug\net9.0\Whispyr.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\obj\Debug\net9.0\Whispyr.Infrastructure.AssemblyInfoInputs.cache
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\obj\Debug\net9.0\Whispyr.Infrastructure.AssemblyInfo.cs
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\obj\Debug\net9.0\Whispyr.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\obj\Debug\net9.0\Whispyr.Infrastructure.sourcelink.json
 C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\obj\Debug\net9.0\Whispyr..4954E718.Up2Date
 C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\obj\Debug\net9.0\Whispyr.Infrastructure.dll
 C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Infrastructure\Whispyr.Infrastructure\obj\Debug\net9.0\refint\Whispyr.Infrastructure.dll

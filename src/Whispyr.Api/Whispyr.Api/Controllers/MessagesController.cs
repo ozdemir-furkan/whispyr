@@ -15,6 +15,9 @@ public class MessagesController(AppDbContext db, IHubContext<RoomHub> hub, IMode
     [HttpPost]
     public async Task<IActionResult> Post(string code, [FromBody] PostMessageDto dto)
     {
+        if (dto is null) return BadRequest(new { error = "body_null" });
+        if (string.IsNullOrWhiteSpace(dto.Text)) return BadRequest(new { error = "text_required" });
+
         var room = await db.Rooms.FirstOrDefaultAsync(r => r.Code == code);
         if (room is null) return NotFound();
 
@@ -27,11 +30,7 @@ public class MessagesController(AppDbContext db, IHubContext<RoomHub> hub, IMode
             CreatedAt = DateTime.UtcNow
         };
 
-        if (mod.ShouldFlag(msg.Text, out var why))
-        {
-            msg.IsFlagged = true;
-            // istersen why loglanabilir
-        }
+        if (mod.ShouldFlag(msg.Text, out _)) msg.IsFlagged = true;
 
         db.Messages.Add(msg);
         await db.SaveChangesAsync();
@@ -50,4 +49,9 @@ public class MessagesController(AppDbContext db, IHubContext<RoomHub> hub, IMode
     }
 }
 
-public record PostMessageDto(string Text, string? AuthorHash);
+// DTO: record DEĞİL, parametresiz sınıf!
+public class PostMessageDto
+{
+    public string Text { get; set; } = default!;
+    public string? AuthorHash { get; set; }
+}
