@@ -17,4 +17,9 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Whispyr.Application\Whispyr.Application\Whispyr.Application.csproj" />
+    <ProjectReference Include="..\..\Whispyr.Infrastructure\Whispyr.Infrastructure\Whispyr.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>
