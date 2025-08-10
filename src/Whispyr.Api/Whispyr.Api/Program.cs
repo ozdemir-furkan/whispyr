@@ -34,12 +34,15 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 builder.Services.AddSignalR();
 
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-    p.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin()
+    p.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().SetIsOriginAllowed(_ => true)
 ));
+
+builder.Services.AddControllers();
 
 var app = builder.Build();
 app.UseCors();
 app.MapControllers();
+
 
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 app.MapHub<RoomHub>("/hubs/room");

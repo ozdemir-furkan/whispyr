@@ -1,0 +1,16 @@
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\bin\Debug\net9.0\Whispyr.Application.deps.json
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\bin\Debug\net9.0\Whispyr.Application.dll
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\bin\Debug\net9.0\Whispyr.Application.pdb
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\bin\Debug\net9.0\Whispyr.Domain.dll
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\bin\Debug\net9.0\Whispyr.Domain.pdb
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\obj\Debug\net9.0\Whispyr.Application.csproj.AssemblyReference.cache
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\obj\Debug\net9.0\Whispyr.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\obj\Debug\net9.0\Whispyr.Application.AssemblyInfoInputs.cache
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\obj\Debug\net9.0\Whispyr.Application.AssemblyInfo.cs
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\obj\Debug\net9.0\Whispyr.Application.csproj.CoreCompileInputs.cache
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\obj\Debug\net9.0\Whispyr.Application.sourcelink.json
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\obj\Debug\net9.0\Whispyr..3F4AC3CB.Up2Date
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\obj\Debug\net9.0\Whispyr.Application.dll
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\obj\Debug\net9.0\refint\Whispyr.Application.dll
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\obj\Debug\net9.0\Whispyr.Application.pdb
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Application\Whispyr.Application\obj\Debug\net9.0\ref\Whispyr.Application.dll

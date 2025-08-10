@@ -1,0 +1,12 @@
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Domain\Whispyr.Domain\bin\Debug\net9.0\Whispyr.Domain.deps.json
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Domain\Whispyr.Domain\bin\Debug\net9.0\Whispyr.Domain.dll
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Domain\Whispyr.Domain\bin\Debug\net9.0\Whispyr.Domain.pdb
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Domain\Whispyr.Domain\obj\Debug\net9.0\Whispyr.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Domain\Whispyr.Domain\obj\Debug\net9.0\Whispyr.Domain.AssemblyInfoInputs.cache
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Domain\Whispyr.Domain\obj\Debug\net9.0\Whispyr.Domain.AssemblyInfo.cs
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Domain\Whispyr.Domain\obj\Debug\net9.0\Whispyr.Domain.csproj.CoreCompileInputs.cache
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Domain\Whispyr.Domain\obj\Debug\net9.0\Whispyr.Domain.sourcelink.json
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Domain\Whispyr.Domain\obj\Debug\net9.0\Whispyr.Domain.dll
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Domain\Whispyr.Domain\obj\Debug\net9.0\refint\Whispyr.Domain.dll
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Domain\Whispyr.Domain\obj\Debug\net9.0\Whispyr.Domain.pdb
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Domain\Whispyr.Domain\obj\Debug\net9.0\ref\Whispyr.Domain.dll

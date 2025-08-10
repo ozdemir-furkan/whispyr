@@ -1,11 +1,30 @@
 {
   "version": 3,
   "targets": {
-    "net9.0": {}
+    "net9.0": {
+      "Whispyr.Domain/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v9.0",
+        "compile": {
+          "bin/placeholder/Whispyr.Domain.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Whispyr.Domain.dll": {}
+        }
+      }
+    }
   },
-  "libraries": {},
+  "libraries": {
+    "Whispyr.Domain/1.0.0": {
+      "type": "project",
+      "path": "../../Whispyr.Domain/Whispyr.Domain/Whispyr.Domain.csproj",
+      "msbuildProject": "../../Whispyr.Domain/Whispyr.Domain/Whispyr.Domain.csproj"
+    }
+  },
   "projectFileDependencyGroups": {
-    "net9.0": []
+    "net9.0": [
+      "Whispyr.Domain >= 1.0.0"
+    ]
   },
   "packageFolders": {
     "C:\\Users\\furka\\.nuget\\packages\\": {},
@@ -39,7 +58,11 @@
       "frameworks": {
         "net9.0": {
           "targetAlias": "net9.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\Users\\furka\\OneDrive\\Masaüstü\\whispyr\\whispyr\\src\\Whispyr.Domain\\Whispyr.Domain\\Whispyr.Domain.csproj": {
+              "projectPath": "C:\\Users\\furka\\OneDrive\\Masaüstü\\whispyr\\whispyr\\src\\Whispyr.Domain\\Whispyr.Domain\\Whispyr.Domain.csproj"
+            }
+          }
         }
       },
       "warningProperties": {
