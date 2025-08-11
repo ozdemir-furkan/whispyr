@@ -16,7 +16,13 @@ public class RoomsController(AppDbContext db) : ControllerBase
         return string.Concat(Enumerable.Range(0, len).Select(_ => alphabet[rnd.Next(alphabet.Length)]));
     }
 
+    /// <summary>Yeni oda oluşturur.</summary>
+    /// <param name="dto">Oda başlığı</param>
+    /// <returns>Oda kodu ve meta</returns>
     [HttpPost]
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateRoomDto dto)
     {
         // benzersiz kod üret

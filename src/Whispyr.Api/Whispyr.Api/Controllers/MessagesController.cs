@@ -12,6 +12,14 @@ namespace Whispyr.Api.Controllers;
 [Route("rooms/{code}/messages")]
 public class MessagesController(AppDbContext db, IHubContext<RoomHub> hub, IModerationService mod) : ControllerBase
 {
+    /// <summary>Belirtilen oda koduna mesaj oluşturur.</summary>
+    /// <param name="code">Oda kodu</param>
+    /// <param name="dto">Mesaj içeriği</param>
+    /// <returns>Oluşan mesajın Id’si ve flag durumu</returns>
+    [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [Consumes("application/json")]
     [HttpPost]
     public async Task<IActionResult> Post(string code, [FromBody] PostMessageDto dto)
     {
