@@ -50,8 +50,12 @@ builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
 ));
 
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseRouting();
 app.UseCors();
 app.UseMiddleware<RateLimitMiddleware>();
