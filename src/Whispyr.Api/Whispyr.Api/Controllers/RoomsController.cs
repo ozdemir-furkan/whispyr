@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Whispyr.Domain.Entities;
 using Whispyr.Infrastructure.Data;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Whispyr.Api.Controllers;
 
@@ -9,6 +11,8 @@ namespace Whispyr.Api.Controllers;
 [Route("rooms")]
 public class RoomsController(AppDbContext db) : ControllerBase
 {
+    
+    
     static string NewCode(int len = 6)
     {
         const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -23,18 +27,28 @@ public class RoomsController(AppDbContext db) : ControllerBase
     [Consumes("application/json")]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [Authorize]
     public async Task<IActionResult> Create([FromBody] CreateRoomDto dto)
-    {
-        // benzersiz kod üret
-        string code;
-        do { code = NewCode(); }
-        while (await db.Rooms.AnyAsync(r => r.Code == code));
+{
+    if (dto is null) return BadRequest(new { error = "body_null" });
+    if (string.IsNullOrWhiteSpace(dto.Title)) return BadRequest(new { error = "title_required" });
 
-        var room = new Room { Code = code, Title = dto.Title?.Trim() ?? "" };
-        db.Rooms.Add(room);
-        await db.SaveChangesAsync();
-        return Created($"/rooms/{room.Code}", new { room.Id, room.Code, room.Title, room.CreatedAt });
-    }
+    var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+    var userId = int.Parse(userIdStr);
+
+    var room = new Room
+    {
+        Code = MakeRoomCode(),
+        Title = dto.Title.Trim(),
+        CreatedAt = DateTime.UtcNow,
+        OwnerId = userId
+    };
+
+    db.Rooms.Add(room);
+    await db.SaveChangesAsync();
+    return Created($"/rooms/{room.Code}", new { room.Id, room.Code, room.Title, room.OwnerId });
+}
 
     [HttpGet("{code}")]
     public async Task<IActionResult> Get(string code)
@@ -79,6 +93,47 @@ public class RoomsController(AppDbContext db) : ControllerBase
             }
         });
     }
+    [HttpGet]
+   [HttpGet]
+    
+    public async Task<IActionResult> GetRooms()
+    {
+        var rooms = await db.Rooms
+            .AsNoTracking()
+            .OrderByDescending(r => r.Id)
+            .ToListAsync();
+
+        return Ok(rooms);
+    }
+    [HttpDelete("{code}")]
+    [Authorize]
+    public async Task<IActionResult> Delete(string code)
+{
+    var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+    var userId = int.Parse(userIdStr);
+
+    var room = await db.Rooms.FirstOrDefaultAsync(r => r.Code == code);
+    if (room is null) return NotFound();
+
+    if (room.OwnerId != userId) return Forbid(); // sadece owner
+
+    db.Rooms.Remove(room);
+    await db.SaveChangesAsync();
+    return NoContent();
+}
+
+    private static string MakeRoomCode(int len = 6)
+{
+    const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    var bytes = new byte[len];
+    System.Security.Cryptography.RandomNumberGenerator.Fill(bytes);
+
+    var sb = new System.Text.StringBuilder(len);
+    for (int i = 0; i < len; i++)
+        sb.Append(alphabet[bytes[i] % alphabet.Length]);
+    return sb.ToString();
+}
 }
 
 public record CreateRoomDto(string? Title);

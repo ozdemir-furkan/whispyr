@@ -43,6 +43,9 @@ namespace Whispyr.Infrastructure.Migrations
                     b.Property<int>("RoomId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("RoomId1")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasColumnType("text");
@@ -50,6 +53,8 @@ namespace Whispyr.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("RoomId");
+
+                    b.HasIndex("RoomId1");
 
                     b.ToTable("Messages");
                 });
@@ -69,6 +74,9 @@ namespace Whispyr.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("OwnerId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("text");
@@ -78,23 +86,71 @@ namespace Whispyr.Infrastructure.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
+                    b.HasIndex("OwnerId");
+
                     b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("Whispyr.Domain.Entities.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Whispyr.Domain.Entities.Message", b =>
                 {
-                    b.HasOne("Whispyr.Domain.Entities.Room", "Room")
-                        .WithMany("Messages")
+                    b.HasOne("Whispyr.Domain.Entities.Room", null)
+                        .WithMany()
                         .HasForeignKey("RoomId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Whispyr.Domain.Entities.Room", "Room")
+                        .WithMany("Messages")
+                        .HasForeignKey("RoomId1");
 
                     b.Navigation("Room");
                 });
 
             modelBuilder.Entity("Whispyr.Domain.Entities.Room", b =>
                 {
+                    b.HasOne("Whispyr.Domain.Entities.User", "Owner")
+                        .WithMany("Rooms")
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("Whispyr.Domain.Entities.Room", b =>
+                {
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("Whispyr.Domain.Entities.User", b =>
+                {
+                    b.Navigation("Rooms");
                 });
 #pragma warning restore 612, 618
         }
