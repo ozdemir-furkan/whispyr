@@ -21,6 +21,13 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpClient<ILlmClient, GeminiClient>(c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(10);
+});
+
+builder.Services.AddScoped<IModerationService, LlmModerationService>();
+
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();

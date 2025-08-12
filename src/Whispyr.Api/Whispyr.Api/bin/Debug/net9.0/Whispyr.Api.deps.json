@@ -1265,6 +1265,7 @@
       "Whispyr.Infrastructure/1.0.0": {
         "dependencies": {
           "Microsoft.EntityFrameworkCore": "9.0.8",
+          "Microsoft.Extensions.Configuration.Abstractions": "9.0.8",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "9.0.4",
           "Whispyr.Application": "1.0.0",
           "Whispyr.Domain": "1.0.0"
