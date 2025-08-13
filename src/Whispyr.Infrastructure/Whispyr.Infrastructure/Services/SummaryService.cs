@@ -1,55 +1,87 @@
+using System.Text;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Whispyr.Application.Abstractions;
-using Whispyr.Application.Prompts;
-using System.Net.Http.Json;
+using Whispyr.Infrastructure.Data;
+using Whispyr.Domain.Entities; // RoomSummary / Message için
 
-namespace Whispyr.Infrastructure.Services
+namespace Whispyr.Infrastructure.Services;
+
+public class SummaryService : ISummaryService
 {
-    public class SummaryService : ISummaryService
+    private readonly AppDbContext _db;
+    private readonly ILlmClient _llm;                  // Gemini/OpenAI sarmalayıcın
+    private readonly ILogger<SummaryService> _logger;
+
+    public SummaryService(AppDbContext db, ILlmClient llm, ILogger<SummaryService> logger)
     {
-        private readonly HttpClient _httpClient;
+        _db = db;
+        _llm = llm;
+        _logger = logger;
+    }
 
-        public SummaryService(HttpClient httpClient)
+    // Basit bir birleştirme + LLM çağrısı
+    public async Task<string> SummarizeAsync(IEnumerable<string> texts, CancellationToken ct = default)
+    {
+        var prompt = BuildPrompt(texts);
+        return await _llm.SummarizeAsync(prompt, ct);
+    }
+
+    // <<--- EKSİK OLAN METOT BURASI --->
+    public async Task<SummarizeResult> CreateOrUpdateSummaryAsync(int roomId, CancellationToken ct = default)
+    {
+        // Son 50 flaglenmemiş mesajı topla
+        var last50 = await _db.Messages
+            .Where(m => m.RoomId == roomId && !m.IsFlagged)
+            .OrderByDescending(m => m.Id)
+            .Take(50)
+            .ToListAsync(ct);
+
+        if (last50.Count == 0)
+            return new SummarizeResult(SummarizeStatus.NoContent);
+
+        try
         {
-            _httpClient = httpClient;
-        }
+            // LLM ile özet üret
+            var text = await SummarizeAsync(last50.Select(m => m.Text), ct);
 
-        public async Task<string> SummarizeAsync(IEnumerable<string> texts, CancellationToken ct = default)
-        {
-            var inputText = string.Join("\n", texts);
-            var apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
+            if (string.IsNullOrWhiteSpace(text))
+                return new SummarizeResult(SummarizeStatus.UpstreamError, ErrorMessage: "Empty summary from LLM");
 
-            if (string.IsNullOrWhiteSpace(apiKey))
-                throw new InvalidOperationException("GEMINI_API_KEY environment variable is not set.");
-
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={apiKey}";
-
-            var payload = new
+            var s = new RoomSummary
             {
-                contents = new[]
-                {
-                    new
-                    {
-                        parts = new[]
-                        {
-                            new { text = $"Şu metinleri özetle:\n{inputText}" }
-                        }
-                    }
-                }
+                RoomId = roomId,
+                Content = text,
+                CreatedAt = DateTime.UtcNow
             };
 
-            var response = await _httpClient.PostAsJsonAsync(url, payload, ct);
-            response.EnsureSuccessStatusCode();
+            _db.RoomSummaries.Add(s);
+            await _db.SaveChangesAsync(ct);
 
-            var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
-
-            var summary = json
-                .GetProperty("candidates")[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString();
-
-            return summary ?? string.Empty;
+            return new SummarizeResult(SummarizeStatus.Ok, s.Id, s.CreatedAt);
         }
+        catch (OperationCanceledException)
+        {
+            // timeout iptal durumları
+            return new SummarizeResult(SummarizeStatus.UpstreamError, ErrorMessage: "Canceled/timeout");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Summary failed for room {RoomId}", roomId);
+            return new SummarizeResult(SummarizeStatus.UpstreamError, ErrorMessage: ex.Message);
+        }
+    }
+
+    private static string BuildPrompt(IEnumerable<string> texts)
+    {
+        // İstersen kendi prompt’unla değiştir
+        var sb = new StringBuilder();
+        sb.AppendLine("Aşağıdaki sohbet mesajlarını kısa ve aksiyon odaklı bir özet halinde çıkar.");
+        sb.AppendLine("Önemli kararlar, aksiyon maddeleri ve açık soruları maddeler halinde yaz.");
+        sb.AppendLine();
+        int i = 1;
+        foreach (var t in texts.Reverse()) // kronolojik sıraya almak istersen
+            sb.AppendLine($"{i++}. {t}");
+        return sb.ToString();
     }
 }

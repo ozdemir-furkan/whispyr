@@ -171,3 +171,9 @@ C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\b
 C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
 C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\bin\Debug\net9.0\Microsoft.Extensions.Configuration.dll
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Binder.dll
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\bin\Debug\net9.0\Microsoft.Extensions.Diagnostics.dll
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\bin\Debug\net9.0\Microsoft.Extensions.Diagnostics.Abstractions.dll
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\bin\Debug\net9.0\Microsoft.Extensions.Http.dll
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\bin\Debug\net9.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll

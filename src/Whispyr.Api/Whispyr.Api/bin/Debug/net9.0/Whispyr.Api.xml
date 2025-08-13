@@ -12,8 +12,6 @@
         </member>
         <member name="M:Whispyr.Api.Controllers.RoomsController.Create(Whispyr.Api.Controllers.CreateRoomDto)">
             <summary>Yeni oda oluşturur.</summary>
-            <param name="dto">Oda başlığı</param>
-            <returns>Oda kodu ve meta</returns>
         </member>
     </members>
 </doc>

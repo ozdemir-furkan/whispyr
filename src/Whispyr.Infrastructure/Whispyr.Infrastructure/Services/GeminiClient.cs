@@ -1,70 +1,106 @@
-using System.Net.Http.Json;
-using System.Text.Json;
-using Whispyr.Application.Abstractions;
-using Whispyr.Application.Prompts;
-using Microsoft.Extensions.Configuration;
 using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
+using Microsoft.Extensions.Configuration;
+using Whispyr.Application.Abstractions;
 
 namespace Whispyr.Infrastructure.Services;
 
 public class GeminiClient : ILlmClient
 {
     private readonly HttpClient _http;
-    private readonly string _model;
     private readonly string _apiKey;
 
-    public GeminiClient(HttpClient http, IConfiguration cfg)
+    public GeminiClient(IConfiguration cfg, HttpClient http)
     {
         _http = http;
-        _model = cfg["Gemini:Model"] ?? "gemini-1.5-flash";
-        _apiKey = cfg["Gemini:ApiKey"] ?? throw new InvalidOperationException("Gemini:ApiKey missing");
-        // BaseAddress vermezsek full URL kullanacağız; timeout Program.cs'de set edilecek.
+        _apiKey = cfg["Gemini:ApiKey"] ?? Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? "";
     }
 
-    public async Task<string> CompleteAsync(string systemPrompt, string userPrompt, CancellationToken ct = default)
+    // --- Summarize ---
+    public async Task<string> SummarizeAsync(string prompt, CancellationToken ct = default)
     {
-        var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_model}:generateContent?key={_apiKey}";
+        var url =
+            $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={_apiKey}";
 
-        var payload = new
+        var body = new
         {
             contents = new[]
             {
-                new {
-                    role = "user",
-                    parts = new object[]
-                    {
-                        new { text = $"[SYSTEM]\n{systemPrompt}\n[USER]\n{userPrompt}" }
-                    }
-                }
-            },
-            generationConfig = new { temperature = 0.2, maxOutputTokens = 256 },
-            safetySettings = new object[] {} // varsayılan kalsın; moderasyon çıktısını biz yorumlayacağız
+                new { parts = new[] { new { text = prompt } } }
+            }
         };
 
-        using var req = new HttpRequestMessage(HttpMethod.Post, url)
-        {
-            Content = JsonContent.Create(payload)
-        };
-
-        using var resp = await _http.SendAsync(req, ct);
+        using var resp = await _http.PostAsJsonAsync(url, body, ct);
         resp.EnsureSuccessStatusCode();
 
-        using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync(ct));
-        // Gemini yanıtı: candidates[0].content.parts[0].text
+        using var doc = await JsonDocument.ParseAsync(await resp.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
         var text = doc.RootElement
-            .GetProperty("candidates")[0]
-            .GetProperty("content")
-            .GetProperty("parts")[0]
-            .GetProperty("text")
-            .GetString();
+                      .GetProperty("candidates")[0]
+                      .GetProperty("content")
+                      .GetProperty("parts")[0]
+                      .GetProperty("text")
+                      .GetString();
 
         return text ?? string.Empty;
     }
 
-    public async Task<bool> ModerateAsync(string text, CancellationToken ct = default)
+    // --- Chat/Completion (basit) ---
+    public async Task<string> CompleteAsync(string systemPrompt, string userPrompt, CancellationToken ct = default)
     {
-        var verdict = await CompleteAsync(ModerationPrompts.System, ModerationPrompts.User(text), ct);
-        verdict = (verdict ?? "").Trim().ToUpperInvariant();
-        return verdict.StartsWith("FLAG");
+        var url =
+            $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={_apiKey}";
+
+        // Gemini'ye iki parçalı içerik veriyoruz: sistem yönergesi + kullanıcı mesajı
+        var body = new
+        {
+            contents = new[]
+            {
+                new { parts = new[] { new { text = systemPrompt } } },
+                new { parts = new[] { new { text = userPrompt } } }
+            }
+        };
+
+        using var resp = await _http.PostAsJsonAsync(url, body, ct);
+        resp.EnsureSuccessStatusCode();
+
+        using var doc = await JsonDocument.ParseAsync(await resp.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
+        var text = doc.RootElement
+                      .GetProperty("candidates")[0]
+                      .GetProperty("content")
+                      .GetProperty("parts")[0]
+                      .GetProperty("text")
+                      .GetString();
+
+        return text ?? string.Empty;
+    }
+
+    // --- Moderasyon (şimdilik basit stub) ---
+    // Dönüş: true = güvenli / izinli, false = sakıncalı
+    public Task<bool> ModerateAsync(string text, CancellationToken ct = default)
+    {
+        // Çok basit bir yerel kontrol (link spam vb.)
+        var linkCount = CountOccurrences(text, "http://") + CountOccurrences(text, "https://");
+        if (linkCount >= 4) return Task.FromResult(false);
+
+        var badWords = new[] { "kotu1", "hakaret", "küfür" };
+        if (badWords.Any(w => text.Contains(w, StringComparison.OrdinalIgnoreCase)))
+            return Task.FromResult(false);
+
+        return Task.FromResult(true);
+    }
+
+    private static int CountOccurrences(string s, string needle)
+    {
+        if (string.IsNullOrEmpty(s) || string.IsNullOrEmpty(needle)) return 0;
+        var count = 0;
+        var idx = 0;
+        while ((idx = s.IndexOf(needle, idx, StringComparison.OrdinalIgnoreCase)) >= 0)
+        {
+            count++;
+            idx += needle.Length;
+        }
+        return count;
     }
 }

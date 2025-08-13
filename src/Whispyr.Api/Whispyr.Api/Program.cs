@@ -16,12 +16,16 @@ using Whispyr.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Whispyr.Infrastructure;
+using Whispyr.Application;
 
 
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 builder.Services.AddScoped<ISummaryService, SummaryService>();
+
 
 builder.Services.AddHttpClient<ILlmClient, GeminiClient>(c =>
 {
@@ -34,13 +38,16 @@ builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<ILlmClient, GeminiClient>();
 
 builder.Services.AddHostedService<SummaryWorker>();
 
 builder.Services.AddScoped<IModerationService, SimpleModerationService>();
 
-builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-    ConnectionMultiplexer.Connect("localhost:6379"));
+var redisConn = builder.Configuration.GetConnectionString("Redis") ?? "redis:6379";
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+    ConnectionMultiplexer.Connect($"{redisConn},abortConnect=false"));
 
 builder.Host.UseSerilog((ctx, lc) => lc
     .ReadFrom.Configuration(ctx.Configuration)
