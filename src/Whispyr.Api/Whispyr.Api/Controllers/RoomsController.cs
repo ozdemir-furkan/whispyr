@@ -4,12 +4,13 @@ using Whispyr.Domain.Entities;
 using Whispyr.Infrastructure.Data;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Whispyr.Application.Abstractions;
 
 namespace Whispyr.Api.Controllers;
 
 [ApiController]
 [Route("rooms")]
-public class RoomsController(AppDbContext db) : ControllerBase
+public class RoomsController(AppDbContext db,ISummaryService summary) : ControllerBase
 {
     
     
@@ -121,6 +122,63 @@ public class RoomsController(AppDbContext db) : ControllerBase
     db.Rooms.Remove(room);
     await db.SaveChangesAsync();
     return NoContent();
+}
+
+[HttpPost("{code}/summaries/refresh")]
+[ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status502BadGateway)]
+public async Task<IActionResult> RefreshSummary(string code, CancellationToken ct)
+{
+    var room = await _db.Rooms.FirstOrDefaultAsync(r => r.Code == code, ct);
+    if (room is null) return NotFound();
+
+    if (User.GetUserId() != room.OwnerId) return Forbid();
+
+    try
+    {
+        var result = await _summarizer.CreateOrUpdateSummaryAsync(room.Id, ct);
+
+        if (result.Status == SummarizeStatus.NoContent)
+            return Problem(title: "No content to summarize",
+                           statusCode: StatusCodes.Status400BadRequest);
+
+        if (result.Status == SummarizeStatus.RateLimited)
+            return Problem(title: "LLM rate limited",
+                           statusCode: StatusCodes.Status429TooManyRequests,
+                           detail: $"Retry after {result.RetryAfterSeconds} seconds");
+
+        if (result.Status == SummarizeStatus.UpstreamError)
+            return Problem(title: "LLM upstream error",
+                           statusCode: StatusCodes.Status502BadGateway,
+                           detail: result.ErrorMessage);
+
+        // OK
+        return Created($"/rooms/{code}/summary", new { id = result.SummaryId, createdAt = result.CreatedAt });
+    }
+    catch (OperationCanceledException)
+    {
+        return Problem(title: "Timeout", statusCode: StatusCodes.Status504GatewayTimeout);
+    }
+}
+
+[HttpGet("{code}/summary")]
+public async Task<IActionResult> GetLatestSummary(string code, CancellationToken ct)
+{
+    var room = await db.Rooms.AsNoTracking().FirstOrDefaultAsync(r => r.Code == code, ct);
+    if (room is null) return NotFound();
+
+    var latest = await db.RoomSummaries
+        .Where(s => s.RoomId == room.Id)
+        .OrderByDescending(s => s.Id)
+        .Select(s => new { s.Id, s.Content, s.CreatedAt })
+        .FirstOrDefaultAsync(ct);
+
+    if (latest is null) return NotFound(new { error = "no_summary" });
+    return Ok(latest);
 }
 
     private static string MakeRoomCode(int len = 6)

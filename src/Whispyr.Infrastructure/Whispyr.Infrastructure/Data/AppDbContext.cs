@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Room> Rooms => Set<Room>();
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<RoomSummary> RoomSummaries => Set<RoomSummary>();
 
      protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -46,6 +47,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .OnDelete(DeleteBehavior.Cascade);
 
             e.HasIndex(m => m.RoomId);
+        });
+
+        //Summary
+        modelBuilder.Entity<RoomSummary>(e =>
+        {
+           e.HasKey(x => x.Id);
+           e.Property(x => x.Content).IsRequired();
+           e.Property(x => x.CreatedAt).IsRequired();
+           e.HasIndex(x => new { x.RoomId, x.Id });
         });
     }
 }

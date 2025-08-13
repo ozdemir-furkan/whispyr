@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\furka\\OneDrive\\Masaüstü\\whispyr\\whispyr\\src\\Whispyr.Api\\Whispyr.Api\\Whispyr.Api.csproj": {}
+    "C:\\Users\\furka\\OneDrive\\Masaüstü\\whispyr\\whispyr\\src\\Whispyr.api\\Whispyr.api\\Whispyr.Api.csproj": {}
   },
   "projects": {
-    "C:\\Users\\furka\\OneDrive\\Masaüstü\\whispyr\\whispyr\\src\\Whispyr.Api\\Whispyr.Api\\Whispyr.Api.csproj": {
+    "C:\\Users\\furka\\OneDrive\\Masaüstü\\whispyr\\whispyr\\src\\Whispyr.api\\Whispyr.api\\Whispyr.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\furka\\OneDrive\\Masaüstü\\whispyr\\whispyr\\src\\Whispyr.Api\\Whispyr.Api\\Whispyr.Api.csproj",
+        "projectUniqueName": "C:\\Users\\furka\\OneDrive\\Masaüstü\\whispyr\\whispyr\\src\\Whispyr.api\\Whispyr.api\\Whispyr.Api.csproj",
         "projectName": "Whispyr.Api",
-        "projectPath": "C:\\Users\\furka\\OneDrive\\Masaüstü\\whispyr\\whispyr\\src\\Whispyr.Api\\Whispyr.Api\\Whispyr.Api.csproj",
+        "projectPath": "C:\\Users\\furka\\OneDrive\\Masaüstü\\whispyr\\whispyr\\src\\Whispyr.api\\Whispyr.api\\Whispyr.Api.csproj",
         "packagesPath": "C:\\Users\\furka\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\furka\\OneDrive\\Masaüstü\\whispyr\\whispyr\\src\\Whispyr.Api\\Whispyr.Api\\obj\\",
+        "outputPath": "C:\\Users\\furka\\OneDrive\\Masaüstü\\whispyr\\whispyr\\src\\Whispyr.api\\Whispyr.api\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

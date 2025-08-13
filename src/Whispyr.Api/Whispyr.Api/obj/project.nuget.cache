@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "gz5d/TLFnbo=",
+  "dgSpecHash": "Q6jtQgL28kU=",
   "success": true,
-  "projectFilePath": "C:\\Users\\furka\\OneDrive\\Masaüstü\\whispyr\\whispyr\\src\\Whispyr.Api\\Whispyr.Api\\Whispyr.Api.csproj",
+  "projectFilePath": "C:\\Users\\furka\\OneDrive\\Masaüstü\\whispyr\\whispyr\\src\\Whispyr.api\\Whispyr.api\\Whispyr.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\furka\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\furka\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
