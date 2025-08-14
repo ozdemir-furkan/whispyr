@@ -10,8 +10,23 @@ using System.Globalization;
 using System.Text.Json;
 
 namespace Whispyr.Api.Controllers;
+public record RoomInsightsDto(
+    int RoomId,
+    string Code,
+    int TotalMessages,
+    int Last24hMessages,
+    int Last7dMessages,
+    int FlaggedCount,
+    string? TopAuthorHash,
+    int? TopAuthorCount,
+    DateTime? LastMessageAt,
+    DateTime? LastSummaryAt
+);
+
+public record TopAuthorDto(string AuthorHash, int Count);
 
 [ApiController]
+[Produces("application/json")]
 [Route("rooms")]
 public class RoomsController(AppDbContext db, ISummaryService summary) : ControllerBase
 {
@@ -193,6 +208,7 @@ public class RoomsController(AppDbContext db, ISummaryService summary) : Control
     }
 
     [HttpGet("{code}/export")]
+    [Authorize]
     public async Task<IActionResult> Export(string code, [FromQuery] string? format = "json", CancellationToken ct = default)
  {
     var room = await db.Rooms.AsNoTracking().FirstOrDefaultAsync(r => r.Code == code, ct);
@@ -270,6 +286,58 @@ public class RoomsController(AppDbContext db, ISummaryService summary) : Control
 
     return Ok(new { count = items.Count, items });
   }
+
+  [HttpGet("{code}/insights")]
+public async Task<IActionResult> GetInsights(string code, CancellationToken ct)
+ {
+    var now  = DateTime.UtcNow;
+    var dt24 = now.AddHours(-24);
+    var dt7d = now.AddDays(-7);
+
+    var room = await db.Rooms.AsNoTracking().FirstOrDefaultAsync(r => r.Code == code, ct);
+    if (room is null) return NotFound();
+
+    // Hepsini SIRAYLA bekle (aynı DbContext üstünde paralel yok!)
+    var baseQuery = db.Messages.AsNoTracking().Where(m => m.RoomId == room.Id);
+
+    var totalMessages   = await baseQuery.CountAsync(ct);
+    var last24hMessages = await baseQuery.Where(m => m.CreatedAt >= dt24 && !m.IsFlagged).CountAsync(ct);
+    var last7dMessages  = await baseQuery.Where(m => m.CreatedAt >= dt7d  && !m.IsFlagged).CountAsync(ct);
+    var flaggedCount    = await baseQuery.Where(m => m.IsFlagged).CountAsync(ct);
+
+    var lastMessageAt = await baseQuery.OrderByDescending(m => m.CreatedAt)
+                                       .Select(m => (DateTime?)m.CreatedAt)
+                                       .FirstOrDefaultAsync(ct);
+
+    var lastSummaryAt = await db.RoomSummaries.AsNoTracking()
+                            .Where(s => s.RoomId == room.Id)
+                            .OrderByDescending(s => s.CreatedAt)
+                            .Select(s => (DateTime?)s.CreatedAt)
+                            .FirstOrDefaultAsync(ct);
+
+    var top = await baseQuery.Where(m => m.CreatedAt >= dt7d && m.AuthorHash != null)
+                             .GroupBy(m => m.AuthorHash!)
+                             .Select(g => new { AuthorHash = g.Key, Count = g.Count() })
+                             .OrderByDescending(x => x.Count)
+                             .FirstOrDefaultAsync(ct);
+
+    var topAuthorHash  = string.IsNullOrWhiteSpace(top?.AuthorHash) ? null : top!.AuthorHash;
+    int? topAuthorCount = top?.Count;
+
+    return Ok(new RoomInsightsDto(
+        RoomId: room.Id,
+        Code: room.Code,
+        TotalMessages: totalMessages,
+        Last24hMessages: last24hMessages,
+        Last7dMessages: last7dMessages,
+        FlaggedCount: flaggedCount,
+        TopAuthorHash: topAuthorHash,
+        TopAuthorCount: topAuthorCount,
+        LastMessageAt: lastMessageAt,
+        LastSummaryAt: lastSummaryAt
+    ));
+ } 
+
 }
 
 public record CreateRoomDto(string? Title);
