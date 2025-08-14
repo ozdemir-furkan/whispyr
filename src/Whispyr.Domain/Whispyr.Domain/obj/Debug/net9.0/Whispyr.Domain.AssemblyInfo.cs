@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Whispyr.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fe3defe0993ecd9d062e6f20714f71e8afe86b3b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d85223b9f2bbc4c13de22123af9b6fab2bd4b147")]
 [assembly: System.Reflection.AssemblyProductAttribute("Whispyr.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Whispyr.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

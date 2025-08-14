@@ -177,3 +177,5 @@ C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\b
 C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\bin\Debug\net9.0\Microsoft.Extensions.Diagnostics.Abstractions.dll
 C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\bin\Debug\net9.0\Microsoft.Extensions.Http.dll
 C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\bin\Debug\net9.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\bin\Debug\net9.0\HealthChecks.NpgSql.dll
+C:\Users\furka\OneDrive\Masaüstü\whispyr\whispyr\src\Whispyr.Api\Whispyr.Api\bin\Debug\net9.0\HealthChecks.Redis.dll

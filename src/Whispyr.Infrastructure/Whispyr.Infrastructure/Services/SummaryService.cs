@@ -3,14 +3,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Whispyr.Application.Abstractions;
 using Whispyr.Infrastructure.Data;
-using Whispyr.Domain.Entities; // RoomSummary / Message için
+using Whispyr.Domain.Entities;
 
 namespace Whispyr.Infrastructure.Services;
 
 public class SummaryService : ISummaryService
 {
     private readonly AppDbContext _db;
-    private readonly ILlmClient _llm;                  // Gemini/OpenAI sarmalayıcın
+    private readonly ILlmClient _llm;
     private readonly ILogger<SummaryService> _logger;
 
     public SummaryService(AppDbContext db, ILlmClient llm, ILogger<SummaryService> logger)
@@ -20,17 +20,48 @@ public class SummaryService : ISummaryService
         _logger = logger;
     }
 
-    // Basit bir birleştirme + LLM çağrısı
+    private static TimeSpan Backoff(int attempt)
+    {
+        var baseMs = (int)Math.Min(1000 * Math.Pow(2, attempt), 15_000);
+        var jitter = Random.Shared.Next(0, 500);
+        return TimeSpan.FromMilliseconds(baseMs + jitter);
+    }
+
     public async Task<string> SummarizeAsync(IEnumerable<string> texts, CancellationToken ct = default)
     {
         var prompt = BuildPrompt(texts);
-        return await _llm.SummarizeAsync(prompt, ct);
+
+        // 3 deneme
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                var text = await _llm.SummarizeAsync(prompt, ct);
+                if (!string.IsNullOrWhiteSpace(text))
+                    return text;
+
+                throw new Exception("Empty summary from LLM");
+            }
+            catch (OperationCanceledException) { throw; }
+            // Eğer sende özel rate-limit exception türü varsa buraya ekle:
+            // catch (GeminiRateLimitException ex) when (attempt < 2) { ... }
+            catch (HttpRequestException ex) when (attempt < 2)
+            {
+                _logger.LogWarning(ex, "LLM transient (network) error, retrying...");
+                await Task.Delay(Backoff(attempt), ct);
+            }
+            catch (Exception ex) when (attempt < 2)
+            {
+                _logger.LogWarning(ex, "LLM error, retrying...");
+                await Task.Delay(Backoff(attempt), ct);
+            }
+        }
+
+        throw new Exception("LLM failed after retries");
     }
 
-    // <<--- EKSİK OLAN METOT BURASI --->
     public async Task<SummarizeResult> CreateOrUpdateSummaryAsync(int roomId, CancellationToken ct = default)
     {
-        // Son 50 flaglenmemiş mesajı topla
         var last50 = await _db.Messages
             .Where(m => m.RoomId == roomId && !m.IsFlagged)
             .OrderByDescending(m => m.Id)
@@ -38,15 +69,14 @@ public class SummaryService : ISummaryService
             .ToListAsync(ct);
 
         if (last50.Count == 0)
-            return new SummarizeResult(SummarizeStatus.NoContent);
+            return new(SummarizeStatus.NoContent);
 
         try
         {
-            // LLM ile özet üret
             var text = await SummarizeAsync(last50.Select(m => m.Text), ct);
 
             if (string.IsNullOrWhiteSpace(text))
-                return new SummarizeResult(SummarizeStatus.UpstreamError, ErrorMessage: "Empty summary from LLM");
+                return new(SummarizeStatus.UpstreamError, ErrorMessage: "Empty summary from LLM");
 
             var s = new RoomSummary
             {
@@ -58,29 +88,27 @@ public class SummaryService : ISummaryService
             _db.RoomSummaries.Add(s);
             await _db.SaveChangesAsync(ct);
 
-            return new SummarizeResult(SummarizeStatus.Ok, s.Id, s.CreatedAt);
+            return new(SummarizeStatus.Ok, s.Id, s.CreatedAt);
         }
         catch (OperationCanceledException)
         {
-            // timeout iptal durumları
-            return new SummarizeResult(SummarizeStatus.UpstreamError, ErrorMessage: "Canceled/timeout");
+            return new(SummarizeStatus.UpstreamError, ErrorMessage: "Canceled/timeout");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Summary failed for room {RoomId}", roomId);
-            return new SummarizeResult(SummarizeStatus.UpstreamError, ErrorMessage: ex.Message);
+            return new(SummarizeStatus.UpstreamError, ErrorMessage: ex.Message);
         }
     }
 
     private static string BuildPrompt(IEnumerable<string> texts)
     {
-        // İstersen kendi prompt’unla değiştir
         var sb = new StringBuilder();
         sb.AppendLine("Aşağıdaki sohbet mesajlarını kısa ve aksiyon odaklı bir özet halinde çıkar.");
         sb.AppendLine("Önemli kararlar, aksiyon maddeleri ve açık soruları maddeler halinde yaz.");
         sb.AppendLine();
         int i = 1;
-        foreach (var t in texts.Reverse()) // kronolojik sıraya almak istersen
+        foreach (var t in texts.Reverse())
             sb.AppendLine($"{i++}. {t}");
         return sb.ToString();
     }

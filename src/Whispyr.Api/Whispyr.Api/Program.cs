@@ -95,6 +95,10 @@ builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
     p.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().SetIsOriginAllowed(_ => true)
 ));
 
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("Postgres")!)
+    .AddRedis(Environment.GetEnvironmentVariable("ConnectionStrings__Redis") ?? "redis:6379");
+
 
 var app = builder.Build();
 app.UseSwagger();
@@ -109,6 +113,8 @@ app.MapControllers();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
+app.MapHealthChecks("/health");       // canlılık
+app.MapHealthChecks("/ready");
 app.MapHub<RoomHub>("/hubs/room");
 
 app.Run();
