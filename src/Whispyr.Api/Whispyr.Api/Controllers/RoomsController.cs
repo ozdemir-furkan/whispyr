@@ -5,6 +5,9 @@ using Whispyr.Api.Extensions;                 // GetUserId() için
 using Whispyr.Application.Abstractions;
 using Whispyr.Domain.Entities;
 using Whispyr.Infrastructure.Data;
+using System.Text; 
+using System.Globalization;
+using System.Text.Json;
 
 namespace Whispyr.Api.Controllers;
 
@@ -188,6 +191,85 @@ public class RoomsController(AppDbContext db, ISummaryService summary) : Control
         if (latest is null) return NotFound(new { error = "no_summary" });
         return Ok(latest);
     }
+
+    [HttpGet("{code}/export")]
+    public async Task<IActionResult> Export(string code, [FromQuery] string? format = "json", CancellationToken ct = default)
+ {
+    var room = await db.Rooms.AsNoTracking().FirstOrDefaultAsync(r => r.Code == code, ct);
+    if (room is null) return NotFound();
+
+    var messages = await db.Messages.AsNoTracking()
+        .Where(m => m.RoomId == room.Id)
+        .OrderBy(m => m.Id)
+        .Select(m => new {
+            m.Id,
+            m.RoomId,
+            m.AuthorHash,
+            m.Text,
+            m.IsFlagged,
+            m.CreatedAt
+        })
+        .ToListAsync(ct);
+
+    if (!messages.Any())
+        return NotFound(); // istersen 204 NoContent da dönebilirsin
+
+    var safeTitle = (room.Title ?? "room").Replace(' ', '_');
+    var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
+
+    if (string.Equals(format, "csv", StringComparison.OrdinalIgnoreCase))
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("Id,RoomId,AuthorHash,Text,IsFlagged,CreatedAt");
+        foreach (var m in messages)
+        {
+            // basit CSV kaçışı
+            static string esc(string? s)
+                => s is null ? "" : "\"" + s.Replace("\"", "\"\"") + "\"";
+
+            sb.Append(m.Id).Append(',')
+              .Append(m.RoomId).Append(',')
+              .Append(esc(m.AuthorHash)).Append(',')
+              .Append(esc(m.Text)).Append(',')
+              .Append(m.IsFlagged ? "true" : "false").Append(',')
+              .Append(m.CreatedAt.ToString("o", CultureInfo.InvariantCulture))
+              .AppendLine();
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+        var fn = $"transcript_{safeTitle}_{timestamp}.csv";
+        return File(bytes, "text/csv; charset=utf-8", fn);
+    }
+    else
+    {
+        var json = JsonSerializer.Serialize(messages, new JsonSerializerOptions { WriteIndented = true });
+        var bytes = Encoding.UTF8.GetBytes(json);
+        var fn = $"transcript_{safeTitle}_{timestamp}.json";
+        return File(bytes, "application/json; charset=utf-8", fn);
+    }
+ }
+
+// (Opsiyonel) Basit arama:
+    [HttpGet("{code}/messages/search")]
+    public async Task<IActionResult> SearchMessages(string code, [FromQuery] string q, [FromQuery] int take = 50, CancellationToken ct = default)
+  {
+    if (string.IsNullOrWhiteSpace(q))
+        return BadRequest(new { error = "q_required" });
+
+    var room = await db.Rooms.AsNoTracking().FirstOrDefaultAsync(r => r.Code == code, ct);
+    if (room is null) return NotFound();
+
+    take = Math.Clamp(take, 1, 500);
+
+    var items = await db.Messages.AsNoTracking()
+        .Where(m => m.RoomId == room.Id && m.Text.Contains(q))
+        .OrderBy(m => m.Id)
+        .Take(take)
+        .Select(m => new { m.Id, m.Text, m.CreatedAt, m.IsFlagged })
+        .ToListAsync(ct);
+
+    return Ok(new { count = items.Count, items });
+  }
 }
 
 public record CreateRoomDto(string? Title);
