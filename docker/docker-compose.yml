@@ -53,6 +53,11 @@ services:
       - Jwt__Key=SuperSecret_ChangeMe_256bit_Example_Only
       - Jwt__Issuer=whispyr
       - Jwt__Audience=whispyr-client
+      - Llm__Retry__MaxAttempts=6
+      - Llm__Retry__BaseDelayMs=300
+      - Llm__Retry__JitterMs=300
+      - Llm__Retry__RespectRetryAfter=true
+      - Llm__Retry__RetryOn5xx=true
     depends_on:
       - postgres
       - redis

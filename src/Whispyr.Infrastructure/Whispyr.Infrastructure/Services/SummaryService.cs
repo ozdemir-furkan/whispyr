@@ -61,45 +61,57 @@ public class SummaryService : ISummaryService
     }
 
     public async Task<SummarizeResult> CreateOrUpdateSummaryAsync(int roomId, CancellationToken ct = default)
-    {
-        var last50 = await _db.Messages
-            .Where(m => m.RoomId == roomId && !m.IsFlagged)
-            .OrderByDescending(m => m.Id)
-            .Take(50)
-            .ToListAsync(ct);
+ {
+    var last50 = await _db.Messages
+        .Where(m => m.RoomId == roomId && !m.IsFlagged)
+        .OrderByDescending(m => m.Id)
+        .Take(50)
+        .ToListAsync(ct);
 
-        if (last50.Count == 0)
-            return new(SummarizeStatus.NoContent);
+    if (last50.Count == 0)
+        return new SummarizeResult(SummarizeStatus.NoContent);
 
-        try
-        {
-            var text = await SummarizeAsync(last50.Select(m => m.Text), ct);
+    try
+{
+    var text = await SummarizeAsync(last50.Select(m => m.Text), ct);
 
-            if (string.IsNullOrWhiteSpace(text))
-                return new(SummarizeStatus.UpstreamError, ErrorMessage: "Empty summary from LLM");
+    if (string.IsNullOrWhiteSpace(text))
+        return new SummarizeResult(SummarizeStatus.UpstreamError, ErrorMessage: "Empty summary from LLM");
 
-            var s = new RoomSummary
-            {
-                RoomId = roomId,
-                Content = text,
-                CreatedAt = DateTime.UtcNow
-            };
+    var s = new RoomSummary { RoomId = roomId, Content = text, CreatedAt = DateTime.UtcNow };
+    _db.RoomSummaries.Add(s);
+    await _db.SaveChangesAsync(ct);
 
-            _db.RoomSummaries.Add(s);
-            await _db.SaveChangesAsync(ct);
+    return new SummarizeResult(SummarizeStatus.Ok, s.Id, s.CreatedAt);
+}
+catch (LlmRateLimitException ex)
+{
+    // ex.RetryAfterSeconds null ise varsayılan 5 sn verelim
+    var retry = ex.RetryAfterSeconds ?? 5;
+    _logger.LogWarning("LLM rate limited. retryAfter={Retry}", retry);
 
-            return new(SummarizeStatus.Ok, s.Id, s.CreatedAt);
-        }
-        catch (OperationCanceledException)
-        {
-            return new(SummarizeStatus.UpstreamError, ErrorMessage: "Canceled/timeout");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Summary failed for room {RoomId}", roomId);
-            return new(SummarizeStatus.UpstreamError, ErrorMessage: ex.Message);
-        }
-    }
+    return new SummarizeResult(
+        SummarizeStatus.RateLimited,
+        RetryAfterSeconds: retry,
+        ErrorMessage: ex.Message
+    );
+}
+catch (HttpRequestException ex)
+{
+    // 5xx veya ağ hatası
+    _logger.LogWarning(ex, "LLM upstream error for room {RoomId}", roomId);
+    return new SummarizeResult(SummarizeStatus.UpstreamError, ErrorMessage: ex.Message);
+}
+catch (OperationCanceledException)
+{
+    return new SummarizeResult(SummarizeStatus.UpstreamError, ErrorMessage: "Canceled/timeout");
+}
+catch (Exception ex)
+ {
+    _logger.LogError(ex, "Summary failed for room {RoomId}", roomId);
+    return new SummarizeResult(SummarizeStatus.UpstreamError, ErrorMessage: ex.Message);
+ }
+ }
 
     private static string BuildPrompt(IEnumerable<string> texts)
     {

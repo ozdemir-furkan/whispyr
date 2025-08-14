@@ -153,43 +153,53 @@ public class RoomsController(AppDbContext db, ISummaryService summary) : Control
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status502BadGateway)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> RefreshSummary(string code, CancellationToken ct)
+ {
+    var room = await db.Rooms.FirstOrDefaultAsync(r => r.Code == code, ct);
+    if (room is null) return NotFound();
+
+    var userIdStr = User.GetUserId();
+    if (!int.TryParse(userIdStr, out var userId)) return Forbid();
+    if (room.OwnerId is null || room.OwnerId.Value != userId) return Forbid();
+
+    try
     {
-        var room = await db.Rooms.FirstOrDefaultAsync(r => r.Code == code, ct);
-        if (room is null) return NotFound();
+        var result = await summary.CreateOrUpdateSummaryAsync(room.Id, ct);
 
-        var userIdStr = User.GetUserId();
-        if (!int.TryParse(userIdStr, out var userId))
-            return Forbid();
+        if (result.Status == SummarizeStatus.NoContent)
+            return Problem(title: "No content to summarize",
+                           statusCode: StatusCodes.Status400BadRequest);
 
-        if (room.OwnerId is null || room.OwnerId.Value != userId)
-            return Forbid();
+        if (result.Status == SummarizeStatus.RateLimited)
+      {
+      var retry = result.RetryAfterSeconds ?? 5;
+        Response.Headers["Retry-After"] = retry.ToString();
 
-        try
+        return Problem(
+        title: "LLM rate limited",
+        statusCode: StatusCodes.Status429TooManyRequests,
+        detail: $"Retry after {retry} seconds"
+       );
+       }
+
+        if (result.Status == SummarizeStatus.UpstreamError)
         {
-            var result = await summary.CreateOrUpdateSummaryAsync(room.Id, ct);
-
-            if (result.Status == SummarizeStatus.NoContent)
-                return Problem(title: "No content to summarize", statusCode: StatusCodes.Status400BadRequest);
-
-            if (result.Status == SummarizeStatus.RateLimited)
-                return Problem(title: "LLM rate limited",
-                               statusCode: StatusCodes.Status429TooManyRequests,
-                               detail: $"Retry after {result.RetryAfterSeconds} seconds");
-
-            if (result.Status == SummarizeStatus.UpstreamError)
-                return Problem(title: "LLM upstream error",
-                               statusCode: StatusCodes.Status502BadGateway,
-                               detail: result.ErrorMessage);
-
-            return Created($"/rooms/{code}/summary", new { id = result.SummaryId, createdAt = result.CreatedAt });
+            // 503 daha doğru (geçici)
+            if (result.RetryAfterSeconds.HasValue)
+                Response.Headers["Retry-After"] = result.RetryAfterSeconds.Value.ToString();
+            return Problem(title: "LLM upstream error",
+                           statusCode: StatusCodes.Status503ServiceUnavailable,
+                           detail: result.ErrorMessage);
         }
-        catch (OperationCanceledException)
-        {
-            return Problem(title: "Timeout", statusCode: StatusCodes.Status504GatewayTimeout);
-        }
+
+        return Created($"/rooms/{code}/summary", new { id = result.SummaryId, createdAt = result.CreatedAt });
     }
+    catch (OperationCanceledException)
+    {
+        return Problem(title: "Timeout", statusCode: StatusCodes.Status504GatewayTimeout);
+    }
+ }
 
     [HttpGet("{code}/summary")]
     public async Task<IActionResult> GetLatestSummary(string code, CancellationToken ct)

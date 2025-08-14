@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Whispyr.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a534888e868c3e15520210ca028a953993d95844")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+687915ad03532561e3a293893d7aad35e037badb")]
 [assembly: System.Reflection.AssemblyProductAttribute("Whispyr.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Whispyr.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
