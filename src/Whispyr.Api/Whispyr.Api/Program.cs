@@ -45,7 +45,10 @@ builder.Services.AddHostedService<SummaryWorker>();
 
 builder.Services.AddScoped<IModerationService, SimpleModerationService>();
 
-var redisConn = builder.Configuration.GetConnectionString("Redis") ?? "redis:6379";
+var defaultRedis = builder.Environment.IsDevelopment() ? "localhost:6379" : "redis:6379";
+
+var redisConn = builder.Configuration.GetConnectionString("Redis") ?? defaultRedis;
+
 builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
     ConnectionMultiplexer.Connect($"{redisConn},abortConnect=false"));
 
@@ -103,7 +106,8 @@ app.UseAuthorization();
 app.UseMiddleware<RateLimitMiddleware>();
 app.MapControllers();
 
-
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 app.MapHub<RoomHub>("/hubs/room");
 

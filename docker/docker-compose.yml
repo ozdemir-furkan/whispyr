@@ -49,6 +49,10 @@ services:
       - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=whispyr;Username=postgres;Password=${POSTGRES_PASSWORD}
       # (Opsiyonel) OTEL endpoint'in varsa:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - ConnectionStrings__Redis=redis:6379
+      - Jwt__Key=SuperSecret_ChangeMe_256bit_Example_Only
+      - Jwt__Issuer=whispyr
+      - Jwt__Audience=whispyr-client
     depends_on:
       - postgres
       - redis
