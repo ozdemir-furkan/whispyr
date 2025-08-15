@@ -8,6 +8,7 @@ using Whispyr.Infrastructure.Data;
 using System.Text; 
 using System.Globalization;
 using System.Text.Json;
+using System.ComponentModel.DataAnnotations;
 
 namespace Whispyr.Api.Controllers;
 public record RoomInsightsDto(
@@ -375,7 +376,97 @@ public class RoomsController(AppDbContext db, ISummaryService summary) : Control
     return Ok(new { total, page = page ?? 1, take, items });
   }
 
+  [HttpGet("{code}/summaries/{id:int}")]
+  public async Task<IActionResult> GetSummaryById(string code, int id, CancellationToken ct = default)
+ {
+    // Odayı doğrula
+    var room = await db.Rooms
+        .AsNoTracking()
+        .FirstOrDefaultAsync(r => r.Code == code, ct);
+    if (room is null) return NotFound();
+
+    // İstenen özeti getir
+    var summary = await db.RoomSummaries
+        .AsNoTracking()
+        .Where(s => s.RoomId == room.Id && s.Id == id)
+        .Select(s => new { s.Id, s.Content, s.CreatedAt })
+        .FirstOrDefaultAsync(ct);
+
+    if (summary is null) return NotFound();
+    return Ok(summary);
+ }
+
+ [HttpDelete("{code}/summaries/{id:int}")]
+ [Authorize]
+ public async Task<IActionResult> DeleteSummary(string code, int id, CancellationToken ct = default)
+ {
+    var room = await db.Rooms.FirstOrDefaultAsync(r => r.Code == code, ct);
+    if (room is null) return NotFound();
+
+    // sadece oda sahibi silebilsin
+    var userIdStr = User.GetUserId();
+    if (!int.TryParse(userIdStr, out var userId)) return Forbid();
+    if (room.OwnerId is null || room.OwnerId.Value != userId) return Forbid();
+
+    var entity = await db.RoomSummaries.FirstOrDefaultAsync(s => s.RoomId == room.Id && s.Id == id, ct);
+    if (entity is null) return NotFound();
+
+    db.RoomSummaries.Remove(entity);
+    await db.SaveChangesAsync(ct);
+    return NoContent();
+ }
+
+ [HttpDelete("{code}/summaries")]
+ [Authorize]
+ public async Task<IActionResult> DeleteSummaries(
+    string code,
+    [FromQuery] DateTime? olderThan = null,
+    CancellationToken ct = default)
+ {
+    var room = await db.Rooms.FirstOrDefaultAsync(r => r.Code == code, ct);
+    if (room is null) return NotFound();
+
+    var userIdStr = User.GetUserId();
+    if (!int.TryParse(userIdStr, out var userId)) return Forbid();
+    if (room.OwnerId is null || room.OwnerId.Value != userId) return Forbid();
+
+    var q = db.RoomSummaries.Where(s => s.RoomId == room.Id);
+    if (olderThan is not null)
+        q = q.Where(s => s.CreatedAt < olderThan.Value);
+
+    var toDelete = await q.ToListAsync(ct);
+    if (toDelete.Count == 0) return NoContent();
+
+    db.RoomSummaries.RemoveRange(toDelete);
+    await db.SaveChangesAsync(ct);
+    return NoContent();
+ }
+
+ [HttpPatch("{code}")]
+ [Authorize]
+ public async Task<IActionResult> Update(string code, [FromBody] UpdateRoomDto dto, CancellationToken ct)
+ {
+    if (dto is null) return BadRequest(new { error = "body_null" });
+
+    var room = await db.Rooms.FirstOrDefaultAsync(r => r.Code == code, ct);
+    if (room is null) return NotFound();
+
+    var userIdStr = User.GetUserId();
+    if (!int.TryParse(userIdStr, out var userId)) return Forbid();
+    if (room.OwnerId is null || room.OwnerId.Value != userId) return Forbid();
+
+    
+
+   
+    if (string.IsNullOrWhiteSpace(dto.Title)) return BadRequest(new { error = "title_required" });
+    room.Title = dto.Title.Trim();
+
+    await db.SaveChangesAsync(ct);
+    return NoContent();
+ }
+
 
 }
 
 public record CreateRoomDto(string? Title);
+public record UpdateRoomDto([Required] string Title);
