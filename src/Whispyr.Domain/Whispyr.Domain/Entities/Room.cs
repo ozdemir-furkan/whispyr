@@ -10,6 +10,8 @@ public class Room
         public int? OwnerId { get; set; }
         public User? Owner { get; set; }
 
+        public DateTime? UpdatedAt { get; set; }
+
         public ICollection<Message> Messages { get; set; } = new List<Message>();
     
 }

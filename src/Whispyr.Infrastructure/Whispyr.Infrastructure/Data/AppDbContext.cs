@@ -56,5 +56,25 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
        e.Property(x => x.CreatedAt).IsRequired();
        e.HasIndex(x => new { x.RoomId, x.Id });
     });
+
+    modelBuilder.Entity<Room>(e =>
+    {
+    e.HasKey(r => r.Id);
+    e.Property(r => r.Code).IsRequired();
+    e.HasIndex(r => r.Code).IsUnique();
+
+    e.Property(r => r.Title)
+     .IsRequired()
+     .HasMaxLength(80);            // <— max length
+
+    e.Property(r => r.UpdatedAt);   // <— opsiyonel ama şema için ek
+
+    e.HasOne(r => r.Owner)
+     .WithMany(u => u.Rooms)
+     .HasForeignKey(r => r.OwnerId)
+     .OnDelete(DeleteBehavior.SetNull);
+    });
+
+
     }
 }

@@ -447,6 +447,7 @@ public class RoomsController(AppDbContext db, ISummaryService summary) : Control
  public async Task<IActionResult> Update(string code, [FromBody] UpdateRoomDto dto, CancellationToken ct)
  {
     if (dto is null) return BadRequest(new { error = "body_null" });
+    if (!ModelState.IsValid) return ValidationProblem(ModelState);
 
     var room = await db.Rooms.FirstOrDefaultAsync(r => r.Code == code, ct);
     if (room is null) return NotFound();
@@ -455,13 +456,26 @@ public class RoomsController(AppDbContext db, ISummaryService summary) : Control
     if (!int.TryParse(userIdStr, out var userId)) return Forbid();
     if (room.OwnerId is null || room.OwnerId.Value != userId) return Forbid();
 
-    
+    var newTitle = dto.Title!.Trim();
+    if (string.IsNullOrWhiteSpace(newTitle))
+        return BadRequest(new { error = "title_required" });
 
-   
-    if (string.IsNullOrWhiteSpace(dto.Title)) return BadRequest(new { error = "title_required" });
-    room.Title = dto.Title.Trim();
+    // aynı başlık ise no-op
+    if (string.Equals(room.Title, newTitle, StringComparison.Ordinal))
+        return NoContent();
+
+    var oldTitle = room.Title;
+    room.Title = newTitle;
+    room.UpdatedAt = DateTime.UtcNow;
 
     await db.SaveChangesAsync(ct);
+
+    // Basit audit log (Serilog/Microsoft.Extensions.Logging ile)
+    HttpContext.RequestServices
+        .GetRequiredService<ILogger<RoomsController>>()
+        .LogInformation("Room title updated by user {UserId}: '{Old}' -> '{New}' (code={Code})",
+                        userId, oldTitle, room.Title, code);
+
     return NoContent();
  }
 
@@ -469,4 +483,9 @@ public class RoomsController(AppDbContext db, ISummaryService summary) : Control
 }
 
 public record CreateRoomDto(string? Title);
-public record UpdateRoomDto([Required] string Title);
+public sealed class UpdateRoomDto
+{
+    [Required]
+    [StringLength(80, MinimumLength = 1, ErrorMessage = "title_length")]
+    public string? Title { get; set; }
+}

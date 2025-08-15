@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Whispyr.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6bb31ea535189b4ae54add4bf686dff489ee0ce1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+82b3a282f6763ec4fbd54d25c370b2e963f762af")]
 [assembly: System.Reflection.AssemblyProductAttribute("Whispyr.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Whispyr.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
