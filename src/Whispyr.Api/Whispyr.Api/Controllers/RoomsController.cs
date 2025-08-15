@@ -298,7 +298,7 @@ public class RoomsController(AppDbContext db, ISummaryService summary) : Control
   }
 
   [HttpGet("{code}/insights")]
-public async Task<IActionResult> GetInsights(string code, CancellationToken ct)
+  public async Task<IActionResult> GetInsights(string code, CancellationToken ct)
  {
     var now  = DateTime.UtcNow;
     var dt24 = now.AddHours(-24);
@@ -347,6 +347,34 @@ public async Task<IActionResult> GetInsights(string code, CancellationToken ct)
         LastSummaryAt: lastSummaryAt
     ));
  } 
+
+ [HttpGet("{code}/summaries")]
+ public async Task<IActionResult> ListSummaries(
+    string code,
+    [FromQuery] int take = 20,
+    [FromQuery] int? page = 1,
+    CancellationToken ct = default)
+ {
+    take = Math.Clamp(take, 1, 100);
+    var skip = ((page ?? 1) - 1) * take;
+
+    var room = await db.Rooms.AsNoTracking().FirstOrDefaultAsync(r => r.Code == code, ct);
+    if (room is null) return NotFound();
+
+    var total = await db.RoomSummaries.AsNoTracking()
+        .CountAsync(s => s.RoomId == room.Id, ct);
+
+    var items = await db.RoomSummaries.AsNoTracking()
+        .Where(s => s.RoomId == room.Id)
+        .OrderByDescending(s => s.Id)
+        .Skip(skip)
+        .Take(take)
+        .Select(s => new { s.Id, s.Content, s.CreatedAt })
+        .ToListAsync(ct);
+
+    return Ok(new { total, page = page ?? 1, take, items });
+  }
+
 
 }
 
