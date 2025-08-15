@@ -9,6 +9,7 @@ using System.Text;
 using System.Globalization;
 using System.Text.Json;
 using System.ComponentModel.DataAnnotations;
+using Npgsql;
 
 namespace Whispyr.Api.Controllers;
 public record RoomInsightsDto(
@@ -52,15 +53,15 @@ public class RoomsController(AppDbContext db, ISummaryService summary) : Control
     [Authorize]
     public async Task<IActionResult> Create([FromBody] CreateRoomDto dto)
     {
-        if (dto is null) return BadRequest(new { error = "body_null" });
-        if (string.IsNullOrWhiteSpace(dto.Title)) return BadRequest(new { error = "title_required" });
+    if (dto is null) return BadRequest(new { error = "body_null" });
+    if (string.IsNullOrWhiteSpace(dto.Title)) return BadRequest(new { error = "title_required" });
 
-        // Token’dan kullanıcıyı al
-        var userIdStr = User.GetUserId();
-        if (!int.TryParse(userIdStr, out var userId))
-            return Forbid();
+    var userIdStr = User.GetUserId();
+    if (!int.TryParse(userIdStr, out var userId)) return Forbid();
 
-        // Odayı oluştur
+    // max 5 deneme: benzersiz Code üret + kaydet
+    for (int attempt = 1; attempt <= 5; attempt++)
+    {
         var room = new Room
         {
             Code = MakeRoomCode(),
@@ -70,10 +71,22 @@ public class RoomsController(AppDbContext db, ISummaryService summary) : Control
         };
 
         db.Rooms.Add(room);
-        await db.SaveChangesAsync();
-
-        return Created($"/rooms/{room.Code}", new { room.Id, room.Code, room.Title, room.OwnerId });
+        try
+        {
+            await db.SaveChangesAsync();
+            return Created($"/rooms/{room.Code}", new { room.Id, room.Code, room.Title, room.OwnerId });
+        }
+        catch (PostgresException ex) when (ex.SqlState == "23505") // unique_violation
+        {
+            // Code çakıştı, yeniden dene
+            db.Entry(room).State = EntityState.Detached;
+            if (attempt == 5) return Problem(title: "room_code_conflict", statusCode: 409);
+        }
     }
+
+    // teorik olarak buraya düşmez
+    return Problem(statusCode: 500, title: "unknown_error");
+ }
 
     [HttpGet("{code}")]
     public async Task<IActionResult> Get(string code)
@@ -129,24 +142,7 @@ public class RoomsController(AppDbContext db, ISummaryService summary) : Control
         return Ok(rooms);
     }
 
-    [HttpDelete("{code}")]
-    [Authorize]
-    public async Task<IActionResult> Delete(string code)
-    {
-        var room = await db.Rooms.FirstOrDefaultAsync(r => r.Code == code);
-        if (room is null) return NotFound();
-
-        var userIdStr = User.GetUserId();
-        if (!int.TryParse(userIdStr, out var userId))
-            return Forbid();
-
-        if (room.OwnerId is null || room.OwnerId.Value != userId)
-            return Forbid();
-
-        db.Rooms.Remove(room);
-        await db.SaveChangesAsync();
-        return NoContent();
-    }
+   
 
     [HttpPost("{code}/summaries/refresh")]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
@@ -475,6 +471,26 @@ public class RoomsController(AppDbContext db, ISummaryService summary) : Control
         .GetRequiredService<ILogger<RoomsController>>()
         .LogInformation("Room title updated by user {UserId}: '{Old}' -> '{New}' (code={Code})",
                         userId, oldTitle, room.Title, code);
+
+    return NoContent();
+ }
+
+ [HttpDelete("{code}")]
+ [Authorize]
+ public async Task<IActionResult> DeleteRoom(string code, CancellationToken ct)
+ {
+    // Odayı bul
+    var room = await db.Rooms.FirstOrDefaultAsync(r => r.Code == code, ct);
+    if (room is null) return NotFound();
+
+    // Sahiplik kontrolü
+    var userIdStr = User.GetUserId();
+    if (!int.TryParse(userIdStr, out var userId)) return Forbid();
+    if (room.OwnerId is null || room.OwnerId.Value != userId) return Forbid();
+
+    // Sil (Messages ve RoomSummaries için EF’de Cascade varsa otomatik temizlenir)
+    db.Rooms.Remove(room);
+    await db.SaveChangesAsync(ct);
 
     return NoContent();
  }
