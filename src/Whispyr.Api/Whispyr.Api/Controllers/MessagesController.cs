@@ -108,6 +108,29 @@ public class MessagesController(AppDbContext db, IHubContext<RoomHub> hub, IMode
     return Ok(new { total, page = page ?? 1, take, items });
  }
 
+ [HttpPost("{id:int}/unflag")]
+  public async Task<IActionResult> UnflagMessage(string code, int id)
+ {
+    var msg = await db.Messages
+        .Include(m => m.Room)
+        .FirstOrDefaultAsync(m => m.Id == id && m.Room.Code == code);
+
+    if (msg is null) return NotFound();
+    msg.IsFlagged = false;
+    await db.SaveChangesAsync();
+    return Ok(new { msg.Id, msg.IsFlagged });
+ }
+
+ [HttpGet("flagged/count")]
+ public async Task<IActionResult> CountFlagged(string code, CancellationToken ct)
+ {
+    var room = await db.Rooms.AsNoTracking().FirstOrDefaultAsync(r => r.Code == code, ct);
+    if (room is null) return NotFound();
+    var count = await db.Messages.AsNoTracking()
+        .Where(m => m.RoomId == room.Id && m.IsFlagged).CountAsync(ct);
+    return Ok(new { count });
+ }
+
 }
 
 // DTO: parametresiz sınıf
