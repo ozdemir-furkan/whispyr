@@ -32,6 +32,7 @@ builder.Services.AddHttpClient<ILlmClient, GeminiClient>(c =>
     c.Timeout = TimeSpan.FromSeconds(10);
 });
 
+builder.Services.AddSingleton<IModerationService, SimpleModerationService>();
 builder.Services.AddScoped<IModerationService, LlmModerationService>();
 builder.Services.AddInfrastructure();
 builder.Services.AddControllers();

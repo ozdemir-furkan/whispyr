@@ -131,16 +131,33 @@ public class RoomsController(AppDbContext db, ISummaryService summary) : Control
         });
     }
 
-    [HttpGet] // <- Tek attribute yeterli (dosyanda iki kez vardı, biri fazlaydı)
-    public async Task<IActionResult> GetRooms()
-    {
-        var rooms = await db.Rooms
-            .AsNoTracking()
-            .OrderByDescending(r => r.Id)
-            .ToListAsync();
+    [HttpGet]
+    public async Task<IActionResult> GetRooms(
+    [FromQuery] string? owner = null,
+    [FromQuery] int take = 20,
+    [FromQuery] int page = 1)
+ {
+    take = Math.Clamp(take, 1, 100);
+    page = Math.Max(page, 1);
+    var skip = (page - 1) * take;
 
-        return Ok(rooms);
+    var query = db.Rooms.AsNoTracking().OrderByDescending(r => r.Id);
+
+    if (string.Equals(owner, "me", StringComparison.OrdinalIgnoreCase))
+    {
+        var userIdStr = User.GetUserId();
+        if (!int.TryParse(userIdStr, out var userId))
+            return Forbid();
+
+        query = query.Where(r => r.OwnerId == userId)
+                     .OrderByDescending(r => r.Id);
     }
+
+    var total = await query.CountAsync();
+    var items = await query.Skip(skip).Take(take).ToListAsync();
+
+    return Ok(new { total, page, take, items });
+ }
 
    
 
@@ -494,6 +511,8 @@ public class RoomsController(AppDbContext db, ISummaryService summary) : Control
 
     return NoContent();
  }
+
+ 
 
 
 }

@@ -5,10 +5,13 @@
     </assembly>
     <members>
         <member name="M:Whispyr.Api.Controllers.MessagesController.Post(System.String,Whispyr.Api.Controllers.PostMessageDto)">
-            <summary>Belirtilen oda koduna mesaj oluşturur.</summary>
-            <param name="code">Oda kodu</param>
-            <param name="dto">Mesaj içeriği</param>
-            <returns>Oluşan mesajın Id’si ve flag durumu</returns>
+            <summary>Belirtilen odaya mesaj oluşturur (otomatik moderasyon içerir).</summary>
+        </member>
+        <member name="M:Whispyr.Api.Controllers.MessagesController.FlagMessage(System.String,System.Int32)">
+            <summary>Mesajı elle bayrakla (manuel).</summary>
+        </member>
+        <member name="M:Whispyr.Api.Controllers.MessagesController.ListFlagged(System.String,System.Int32,System.Int32)">
+            <summary>Bu odadaki bayraklı mesajları listele (paging).</summary>
         </member>
         <member name="M:Whispyr.Api.Controllers.RoomsController.Create(Whispyr.Api.Controllers.CreateRoomDto)">
             <summary>Yeni oda oluşturur.</summary>
